@@ -1,249 +1,250 @@
-
 <!DOCTYPE html>
 <html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Timer pro</title>
+    <title>Sudhanshu Pro Timer</title>
     <style>
         :root {
             --ios-blue: #0A84FF;
-            --bg: radial-gradient(circle at 50% 50%, #1c1c1e 0%, #000000 100%);
-            --glass: rgba(30, 30, 30, 0.98);
+            --ios-red: #FF453A;
+            --bg: radial-gradient(circle at center, #1c1c1e 0%, #000000 100%);
+            --glass: rgba(25, 25, 25, 0.95);
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body, html { 
             margin: 0; padding: 0; background: #000; color: #fff;
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            height: 100%; width: 100%; overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            height: 100vh; width: 100vw; overflow: hidden;
         }
 
         .app-view {
-            height: 100vh; width: 100vw; display: flex;
-            flex-direction: column; justify-content: center;
-            align-items: center; cursor: pointer; position: relative;
-            background: var(--bg);
+            height: 100%; width: 100%; display: flex;
+            flex-direction: row; justify-content: center; align-items: center; 
+            gap: 5vw; cursor: pointer; position: relative;
+            background: var(--bg); transition: 0.5s;
+        }
+
+        .app-view.running {
+            background: radial-gradient(circle at center, #001d3d 0%, #000000 100%);
         }
 
         .top-label {
-            position: absolute; top: 12%; font-size: 13px;
-            color: var(--ios-blue); letter-spacing: 5px; text-transform: uppercase;
-            font-weight: 400; text-align: center; width: 100%;
-            transition: opacity 0.3s;
+            position: absolute; top: 8%; font-size: 14px;
+            color: var(--ios-blue); letter-spacing: 4px; text-transform: uppercase;
+            text-align: center; width: 100%; font-weight: 600;
+            display: flex; justify-content: center; align-items: center; gap: 8px;
         }
 
-        /* Timer Size Optimized */
-        .timer-container {
-            display: flex; flex-direction: column; align-items: center;
-            justify-content: center; width: 100%;
+        .status-dot {
+            width: 8px; height: 8px; background: var(--ios-red);
+            border-radius: 50%; display: inline-block;
+            box-shadow: 0 0 10px var(--ios-red);
         }
+        .running .status-dot { background: #32D74B; box-shadow: 0 0 10px #32D74B; }
 
-        .timer-unit { display: flex; flex-direction: column; align-items: center; margin: 5px 0; }
+        .digit { font-size: 24vw; font-weight: 200; line-height: 1; letter-spacing: -8px; }
         
-        .digit { 
-            font-size: 9vh; /* Perfect size for mobile */
-            font-weight: 200; 
-            line-height: 1; 
-            letter-spacing: -2px; 
-            font-variant-numeric: tabular-nums;
-        }
-        
-        .tag { font-size: 9px; color: #555; text-transform: uppercase; letter-spacing: 2px; }
+        .timer-unit { display: flex; flex-direction: column; align-items: center; }
+        .tag { font-size: 12px; color: #666; text-transform: uppercase; margin-top: 10px; }
 
-        /* Modal / Pop-up Styling */
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); backdrop-filter: blur(20px);
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(25px);
             display: flex; justify-content: center; align-items: center;
-            z-index: 1000; opacity: 0; pointer-events: none; transition: 0.3s ease;
+            z-index: 1000; opacity: 0; pointer-events: none; transition: 0.4s;
         }
         .overlay.show { opacity: 1; pointer-events: auto; }
 
         .modal {
-            width: 85%; max-width: 350px;
-            background: var(--glass); border-radius: 30px;
-            padding: 25px; transform: scale(0.9); transition: 0.4s cubic-bezier(0.2, 1, 0.3, 1);
+            width: 85%; max-width: 450px; background: var(--glass);
+            border-radius: 30px; padding: 25px; transform: scale(0.9); transition: 0.4s;
             border: 1px solid rgba(255,255,255,0.1);
+            max-height: 90vh; overflow-y: auto;
         }
-        .overlay.show .modal { transform: scale(1); }
 
-        .group { margin-bottom: 20px; }
-        .label-sm { font-size: 10px; color: #777; margin-bottom: 8px; display: block; font-weight: 700; }
-        
-        input {
-            width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-            color: #fff; padding: 12px; border-radius: 12px; font-size: 14px;
+        .input-box {
+            width: 100%; background: #1a1a1a; border: 1px solid #333;
+            color: #fff; padding: 12px; border-radius: 12px; margin: 10px 0; font-size: 16px;
+        }
+
+        .checkbox-container {
+            display: flex; align-items: center; gap: 10px; margin: 10px 0;
+            font-size: 13px; color: #aaa; cursor: pointer;
         }
 
         .btn {
-            width: 100%; padding: 15px; border-radius: 15px; border: none;
+            width: 100%; padding: 16px; border-radius: 16px; border: none;
             font-weight: 600; cursor: pointer; margin-top: 10px;
         }
         .btn-blue { background: var(--ios-blue); color: #fff; }
-        .btn-dark { background: #2c2c2e; color: #888; font-size: 12px; }
+        .btn-save-as { background: #32D74B; color: #000; margin-top: 20px; font-size: 15px; }
+        .btn-reset { background: #ff453a22; color: #ff453a; margin-top: 15px; }
 
-        #history-list { max-height: 150px; overflow-y: auto; margin: 10px 0; }
-        .h-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #222; font-size: 12px; }
+        #history-list { margin-top: 20px; border-top: 1px solid #333; padding-top: 10px; }
+        .h-item { display: flex; justify-content: space-between; padding: 5px 0; color: #888; font-size: 12px; }
 
-        @media (orientation: landscape) {
-            .timer-container { flex-direction: row; gap: 40px; }
-            .digit { font-size: 18vw; }
+        @media (orientation: portrait) {
+            .app-view { flex-direction: column; gap: 10px; }
+            .digit { font-size: 28vw; }
         }
     </style>
 </head>
 <body>
 
     <div class="app-view" id="main-view">
-        <div class="top-label" id="display-label">FOCUS MODE</div>
-        
-        <div class="timer-container">
-            <div class="timer-unit"><div class="digit" id="h">00</div><div class="tag">Hours</div></div>
-            <div class="timer-unit"><div class="digit" id="m">00</div><div class="tag">Minutes</div></div>
-            <div class="timer-unit"><div class="digit" id="s">00</div><div class="tag">Seconds</div></div>
+        <div class="top-label">
+            <span class="status-dot"></span>
+            <span id="display-label">REVISION MODE</span>
         </div>
-        
-        <div style="position:absolute; bottom:20px; font-size:8px; opacity:0.1;">Hold 2s for Settings</div>
+        <div class="timer-unit"><div class="digit" id="h">00</div><div class="tag">HR</div></div>
+        <div class="timer-unit"><div class="digit" id="m">00</div><div class="tag">MIN</div></div>
+        <div class="timer-unit"><div class="digit" id="s">00</div><div class="tag">SEC</div></div>
     </div>
 
     <div class="overlay" id="overlay">
         <div class="modal">
-            <div class="group">
-                <span class="label-sm">TOP TEXT</span>
-                <input type="text" id="input-label" value="FOCUS MODE">
-                <div id="toggle-label" style="margin-top:10px; font-size:12px; color:var(--ios-blue); cursor:pointer;">● Visible</div>
-            </div>
+            <h3 style="text-align:center; margin-top:0;">Settings</h3>
             
-            <div class="group">
-                <span class="label-sm">TIMER (MINUTES)</span>
-                <input type="number" id="input-min" value="0">
-            </div>
+            <label style="font-size:11px; color:#888;">TOP TEXT</label>
+            <input type="text" id="input-label" class="input-box" placeholder="e.g. Study Time">
+            
+            <label class="checkbox-container">
+                <input type="checkbox" id="hide-text-cb"> Hide Label (Only Dot)
+            </label>
+            
+            <label style="font-size:11px; color:#888;">TARGET MINS (0 = Stopwatch)</label>
+            <input type="number" id="input-min" class="input-box" value="0">
 
-            <div class="group">
-                <span class="label-sm">HISTORY</span>
-                <div id="history-list"></div>
-                <button class="btn btn-dark" id="download-btn">Download Report (.txt)</button>
-            </div>
-
-            <button class="btn btn-blue" id="save-btn">Save & Close</button>
+            <button class="btn btn-blue" id="save-btn">Apply Settings</button>
+            
+            <div id="history-list"></div>
+            
+            <button class="btn btn-save-as" id="save-as-btn">💾 Save File As...</button>
+            
+            <button class="btn btn-reset" id="stop-btn">Reset & Save Session</button>
         </div>
     </div>
 
     <script>
-        let time = 0;
-        let isRunning = false;
-        let targetMin = 0;
-        let timerInterval;
-        let holdTimer;
-        let history = JSON.parse(localStorage.getItem('SUD_JS_DATA')) || [];
-        const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
+        let time = 0, isRunning = false, targetMin = 0, timerInterval, holdTimer, wakeLock = null;
+        let history = JSON.parse(localStorage.getItem('SUD_DATA')) || [];
+        const alarm = new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_731427181.mp3");
 
-        // Elements
         const mainView = document.getElementById('main-view');
         const overlay = document.getElementById('overlay');
         const displayLabel = document.getElementById('display-label');
-        const inputLabel = document.getElementById('input-label');
-        const inputMin = document.getElementById('input-min');
-        const toggleLabelBtn = document.getElementById('toggle-label');
-        const historyList = document.getElementById('history-list');
+
+        async function requestWakeLock() {
+            try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
+        }
 
         function updateDisplay() {
-            const h = Math.floor(time / 3600).toString().padStart(2, '0');
-            const m = Math.floor((time % 3600) / 60).toString().padStart(2, '0');
-            const s = (time % 60).toString().padStart(2, '0');
-            document.getElementById('h').innerText = h;
-            document.getElementById('m').innerText = m;
-            document.getElementById('s').innerText = s;
+            document.getElementById('h').innerText = Math.floor(time / 3600).toString().padStart(2, '0');
+            document.getElementById('m').innerText = Math.floor((time % 3600) / 60).toString().padStart(2, '0');
+            document.getElementById('s').innerText = (time % 60).toString().padStart(2, '0');
         }
 
         function startTimer() {
-            if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
-            isRunning = true;
-            if (targetMin > 0 && time === 0) time = targetMin * 60;
-            
-            timerInterval = setInterval(() => {
-                if (targetMin > 0) {
-                    if (time <= 1) {
-                        time = 0;
-                        stopTimer();
-                        audio.play();
-                        setTimeout(() => { audio.pause(); audio.currentTime = 0; }, 7000);
-                    } else {
-                        time--;
-                    }
-                } else {
-                    time++;
-                }
-                updateDisplay();
-            }, 1000);
+            alarm.play().then(() => { alarm.pause(); alarm.currentTime = 0; }).catch(() => {});
+            if (!isRunning) {
+                isRunning = true;
+                mainView.classList.add('running');
+                requestWakeLock();
+                if (targetMin > 0 && time === 0) time = targetMin * 60;
+                timerInterval = setInterval(() => {
+                    if (targetMin > 0) {
+                        if (time <= 1) { time = 0; finishSession(); } else time--;
+                    } else time++;
+                    updateDisplay();
+                }, 1000);
+            }
         }
 
-        function stopTimer() {
+        function pauseTimer() {
             clearInterval(timerInterval);
             isRunning = false;
-            saveToHistory();
-            time = 0;
-            updateDisplay();
+            mainView.classList.remove('running');
+            if (wakeLock) wakeLock.release().then(() => wakeLock = null);
         }
 
-        function saveToHistory() {
-            let actualSecs = (targetMin > 0) ? (targetMin * 60 - time) : time;
-            if (actualSecs > 10) {
-                const entry = {
-                    date: new Date().toLocaleDateString('hi-IN'),
-                    mins: Math.floor(actualSecs / 60)
-                };
-                history.unshift(entry);
-                history = history.slice(0, 10);
-                localStorage.setItem('SUD_JS_DATA', JSON.stringify(history));
+        function finishSession() {
+            pauseTimer();
+            alarm.play();
+            saveToLocal();
+            setTimeout(() => { alert("⏰ Time's up!"); alarm.pause(); }, 300);
+        }
+
+        function saveToLocal() {
+            let actualTime = (targetMin > 0) ? (targetMin * 60 - time) : time;
+            if (actualTime > 5) {
+                history.unshift({d: new Date().toLocaleString(), m: Math.floor(actualTime/60)});
+                localStorage.setItem('SUD_DATA', JSON.stringify(history.slice(0, 50)));
                 renderHistory();
             }
         }
 
         function renderHistory() {
-            historyList.innerHTML = history.map(h => 
-                `<div class="h-item"><span>${h.date}</span><b>${h.mins}m study</b></div>`
-            ).join('');
+            document.getElementById('history-list').innerHTML = history.slice(0,3).map(h => 
+                `<div class="h-item"><span>📅 ${h.d.split(',')[0]}</span><b>${h.m}m</b></div>`).join('');
         }
 
-        // Long Press Logic
-        mainView.addEventListener('mousedown', () => { holdTimer = setTimeout(() => overlay.classList.add('show'), 2000); });
-        mainView.addEventListener('touchstart', () => { holdTimer = setTimeout(() => overlay.classList.add('show'), 2000); });
-        mainView.addEventListener('mouseup', () => clearTimeout(holdTimer));
-        mainView.addEventListener('touchend', () => clearTimeout(holdTimer));
-
-        // Click to Start/Stop
-        mainView.addEventListener('click', () => {
-            if (overlay.classList.contains('show')) return;
-            isRunning ? stopTimer() : startTimer();
-        });
-
-        // Settings Actions
-        document.getElementById('save-btn').addEventListener('click', () => {
-            displayLabel.innerText = inputLabel.value;
-            targetMin = parseInt(inputMin.value) || 0;
-            overlay.classList.remove('show');
-        });
-
-        toggleLabelBtn.addEventListener('click', () => {
-            if (displayLabel.style.opacity === "0") {
-                displayLabel.style.opacity = "1";
-                toggleLabelBtn.innerText = "● Visible";
+        // --- THE "SAVE AS" FILE MANAGER FUNCTION ---
+        async function saveAsFile() {
+            const content = history.map(h => `${h.d}: ${h.m} minutes`).join('\n') || "No data.";
+            
+            if ('showSaveFilePicker' in window) {
+                try {
+                    // Ye asli File Manager popup khulega
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: 'Sudhanshu_Report.txt',
+                        types: [{
+                            description: 'Text File',
+                            accept: {'text/plain': ['.txt']},
+                        }],
+                    });
+                    const writable = await handle.createWritable();
+                    await writable.write(content);
+                    await writable.close();
+                    alert("File successfully saved!");
+                } catch (err) {
+                    console.log("Save cancelled");
+                }
             } else {
-                displayLabel.style.opacity = "0";
-                toggleLabelBtn.innerText = "○ Hidden";
+                // Agar browser support nahi karta (mobile) toh ye fallback
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([content]));
+                a.download = "Sudhanshu_Report.txt";
+                a.click();
+                alert("Saving via download (Manager not supported on this browser)");
             }
+        }
+
+        mainView.addEventListener('touchstart', () => holdTimer = setTimeout(() => overlay.classList.add('show'), 1500));
+        mainView.addEventListener('touchend', () => clearTimeout(holdTimer));
+        mainView.addEventListener('mousedown', () => holdTimer = setTimeout(() => overlay.classList.add('show'), 1500));
+        mainView.addEventListener('mouseup', () => clearTimeout(holdTimer));
+        
+        mainView.addEventListener('click', () => { 
+            if (!overlay.classList.contains('show')) isRunning ? pauseTimer() : startTimer(); 
         });
 
-        document.getElementById('download-btn').addEventListener('click', () => {
-            const text = "STUDY REPORT\n" + history.map(h => `${h.date}: ${h.mins}m`).join("\n");
-            const blob = new Blob([text], {type: 'text/plain'});
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = "Sudhanshu_Report.txt";
-            a.click();
+        document.getElementById('save-btn').addEventListener('click', () => {
+            displayLabel.innerText = document.getElementById('input-label').value || "REVISION MODE";
+            displayLabel.style.display = document.getElementById('hide-text-cb').checked ? 'none' : 'inline';
+            const nt = parseInt(document.getElementById('input-min').value) || 0;
+            if (nt !== targetMin) { targetMin = nt; time = 0; }
+            overlay.classList.remove('show');
+            updateDisplay();
         });
+
+        document.getElementById('stop-btn').addEventListener('click', () => {
+            saveToLocal(); time = 0; updateDisplay(); overlay.classList.remove('show');
+        });
+
+        document.getElementById('save-as-btn').addEventListener('click', saveAsFile);
 
         renderHistory();
         updateDisplay();
